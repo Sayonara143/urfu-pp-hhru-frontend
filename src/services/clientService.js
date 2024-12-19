@@ -1,8 +1,8 @@
 import { instanceWithToken } from "./Api"
 
 export const ClientAPI = {
-	getListProduct(){
-		return  instanceWithToken.get(`products`)
+	getListVacancy(){
+		return  instanceWithToken.get(`vacancies`)
 	},
 	getListOrder(id){
 		return  instanceWithToken.get(`orders?client-id=${id}`)
