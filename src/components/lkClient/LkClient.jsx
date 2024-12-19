@@ -32,13 +32,6 @@ const formik = useFormik({
         errors.secondName = 'Это поле обязательно.';
     }
 
-      if (!data.login) {
-          errors.login = 'Вам необходимо согласиться с условиями и положениями.';
-      }
-
-      if (!data.companyName) {
-        errors.companyName = 'Это поле обязательно.';
-      }
 
       return errors;
   },
@@ -48,8 +41,6 @@ const formik = useFormik({
         id: user.id,
         second_name: data.secondName,
         first_name: data.firstName,
-        login: data.login,
-        company_name: data.companyName
       }
       onClick(newData)
       // formik.resetForm();
@@ -81,24 +72,6 @@ const getFormErrorMessage = (name) => {
                                 <label htmlFor="secondName" className={classNames({ 'p-error': isFormFieldValid('secondName') })}>Фамилия</label>
                             </span>
                             {getFormErrorMessage('secondName')}
-                        </div>
-
-                        <div className="field">
-                            <span className="p-float-label p-input-icon-right">
-                                <i className="pi pi-envelope" />
-                                <InputText id="login" name="login" value={formik.values.login} onChange={formik.handleChange} className={classNames({ 'p-invalid': isFormFieldValid('login') })} />
-                                <label htmlFor="login" className={classNames({ 'p-error': isFormFieldValid('login') })}>Логин</label>
-                            </span>
-                            {getFormErrorMessage('login')}
-                        </div>
-
-                        <div className="field">
-                            <span className="p-float-label p-input-icon-right">
-                                <i className="pi pi-envelope" />
-                                <InputText id="companyName" name="companyName" value={formik.values.companyName} onChange={formik.handleChange} className={classNames({ 'p-invalid': isFormFieldValid('companyName') })} />
-                                <label htmlFor="companyName" className={classNames({ 'p-error': isFormFieldValid('companyName') })}>Название компании</label>
-                            </span>
-                            {getFormErrorMessage('companyName')}
                         </div>
 
                         <Button type="submit" label="Сохранить" className="mt-2" />

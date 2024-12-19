@@ -22,6 +22,8 @@ const Client = () => {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
 
+  const [selectedVacancy, setSelectedVacancy] = useState(null);
+
   const [filterKeywordSearch, setFilterKeywordSearch] = useState('');
   const [globalFilters, setGlobalFilters] = useState({});
   const [orders, setOrders] = useState([]);
@@ -29,6 +31,7 @@ const Client = () => {
   const [respondedVacancies, setRespondedVacancies] = useState([]);
   const [loadingVacancy, setLoadingVacancy] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [visibleMoreVac, setVisibleMoreVac] = useState(false);
   const dispatch = useDispatch();
 
   const user = useSelector((state) => state.auth.user);
@@ -39,17 +42,14 @@ const Client = () => {
   useEffect(() => {
     initFilters();
 }, [])
-
-  const onGlobalFilterChange = (e) => {
-    const value = e.target.value;
-    const newFilters = { ...globalFilters, global: { value } };
-    setGlobalFilters(newFilters);
-    setFilterKeywordSearch(value);
-  };
+const openVacancyDialog = (vacancy) => {
+  setSelectedVacancy(vacancy);
+  setVisibleMoreVac(true);
+};
 
   const initFilters = () => {
-    setSortField(null); // Сброс поля сортировки
-    setSortOrder(null); // Сброс порядка сортировки
+    setSortField(null);
+    setSortOrder(null);
     setGlobalFilters({
         'global': { value: null, matchMode: FilterMatchMode.CONTAINS },
         'title': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
@@ -60,7 +60,7 @@ const Client = () => {
 };
 
 const clearFilters = () => {
-    initFilters(); // Сбрасывает фильтры к исходному состоянию
+    initFilters();
 };
 
   useEffect(() => {
@@ -73,17 +73,6 @@ const clearFilters = () => {
       .finally(() => setLoadingVacancy(false));
   }, [filterKeywordSearch]);
 
-  const changeClient = (data) => {
-    ClientAPI.changeClient(data.id, data)
-      .then(() => {
-        dispatch(sync());
-        toast.success('Успешно');
-      })
-      .catch(() => {
-        toast.error('Не получилось обновить данные');
-        console.clear();
-      });
-  };
 
   const renderHeaderVacancy = () => {
     return (
@@ -95,14 +84,6 @@ const clearFilters = () => {
           className="p-button-outlined"
           onClick={clearFilters}
         />
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText
-            value={filterKeywordSearch}
-            onChange={onGlobalFilterChange}
-            placeholder="Поиск по ключевым словам"
-          />
-        </span>
       </div>
     );
   };
@@ -160,7 +141,14 @@ const clearFilters = () => {
               emptyMessage="Вакансии не найдены"
               loading={loadingVacancy}
             >
-              <Column field="title" header="Название" sortable filter filterPlaceholder="Поиск по названию" />
+              <Column field="title" header="Название" body={(rowData) => (
+        <span
+            style={{ color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={() => openVacancyDialog(rowData)}
+        >
+            {rowData.title}
+        </span>
+    )} sortable filter filterPlaceholder="Поиск по названию" />
               <Column field="employment_type" header="Тип работы" sortable filter filterPlaceholder="Тип работы" />
               <Column field="salary_range" header="Оплата" sortable filter filterPlaceholder="Оплата" />
               <Column body={renderRespondButton} />
@@ -168,11 +156,11 @@ const clearFilters = () => {
           </div>
         ) : (
           <div>
-            <DataTable value={orders} responsiveLayout="scroll">
-              <Column field="id" header="ID" />
-              <Column field="product.name" header="Товар" />
-              <Column field="quantity" header="Кол-во" />
-              <Column field="product.price" header="Цена за 1 шт" />
+            <DataTable value={orders} responsiveLayout="stack"
+              breakpoint="768px" emptyMessage="Вакансии не найдены">
+              <Column field="product.name" header="Название" />
+              <Column field="quantity" header="Тип работы" />
+              <Column field="product.price" header="Оплата" />
               <Column field="status.name" header="Статус" />
             </DataTable>
           </div>
@@ -190,7 +178,7 @@ const clearFilters = () => {
       >
         <div style={{ marginTop: '20px' }}>
           <LkClient
-            onClick={changeClient}
+            onClick={()=>{}}
             firstName={user.first_name}
             secondName={user.second_name}
             login={user.login}
@@ -198,6 +186,45 @@ const clearFilters = () => {
           />
         </div>
       </Dialog>
+      {selectedVacancy && (
+    <Dialog
+    header={`Вакансия: ${selectedVacancy.title}`}
+    visible={visibleMoreVac}
+    style={{ width: '50vw' }}
+    breakpoints={{ '960px': '75vw', '640px': '100vw' }}
+    modal
+    draggable={false}
+    onHide={() => setVisibleMoreVac(false)}
+>
+    <div>
+        <p><strong>Название:</strong> {selectedVacancy.title}</p>
+        <p><strong>Тип работы:</strong> {selectedVacancy.employment_type}</p>
+        <p><strong>Описание:</strong> {selectedVacancy.description || 'Описание отсутствует.'}</p>
+        <p><strong>Требования:</strong> {selectedVacancy.requirements || 'Не указаны.'}</p>
+        <p><strong>Оплата:</strong> {selectedVacancy.salary_range || 'Не указано.'}</p>
+        <p><strong>Дата создания:</strong> {new Date(selectedVacancy.created_at).toLocaleDateString()}</p>
+        
+        {selectedVacancy.employer && (
+            <>
+                <p><strong>Компания:</strong> {selectedVacancy.employer.company_name || 'Не указано.'}</p>
+                <p><strong>Описание компании:</strong> {selectedVacancy.employer.company_description || 'Не указано.'}</p>
+                <p><strong>Телефон компании:</strong> {selectedVacancy.employer.phone || 'Не указано.'}</p>
+                <p><strong>Сайт компании:</strong> {selectedVacancy.employer.website || 'Не указан.'}</p>
+            </>
+        )}
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <Button
+                    label={respondedVacancies.includes(selectedVacancy.id) ? 'Откликнулись' : 'Откликнуться'}
+                    disabled={respondedVacancies.includes(selectedVacancy.id)} // Отключаем кнопку, если уже откликнулись
+                    onClick={() => handleRespond(selectedVacancy.id)} // Вызываем функцию отклика
+                    className={respondedVacancies.includes(selectedVacancy.id) ? 'p-button-secondary' : 'p-button-success'}
+                />
+            </div>
+    </div>
+</Dialog>
+
+)}
+
     </div>
   );
 };
